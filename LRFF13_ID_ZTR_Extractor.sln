@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35527.113 d17.12
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LRFF13_ID_ZTR_Extractor", "LRFF13_ID_ZTR_Extractor\LRFF13_ID_ZTR_Extractor.csproj", "{5325E5E4-3257-4CBD-9D8B-1A79CE0436A2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5325E5E4-3257-4CBD-9D8B-1A79CE0436A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5325E5E4-3257-4CBD-9D8B-1A79CE0436A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5325E5E4-3257-4CBD-9D8B-1A79CE0436A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5325E5E4-3257-4CBD-9D8B-1A79CE0436A2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
