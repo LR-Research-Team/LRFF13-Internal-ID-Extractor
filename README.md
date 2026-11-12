@@ -14,8 +14,8 @@ It parses game data (wtb and ztr files, exported to json and txt) and exports th
 
 1. **Build the project** in Visual Studio (.NET 8 required).
 2. **Prepare the following files** (you can export these files using `Nova Chrystallia` from your game installation files):
-   - `item.json`
-   - `txtres_us.txt`
+   - `item.json` located in `weiss_data\db\resident\` (exported from `item.wdb`).
+   - `txtres_us.txt` located in `weiss_data\txtres\resident\system\` (exported from `txtres_us.ztr`).
 3. **Run the application** with the required arguments:
 
    LRFF13_ID_ZTR_Extractor.exe <item.json> <txtres_us.txt> <outputpath>
@@ -28,7 +28,7 @@ It parses game data (wtb and ztr files, exported to json and txt) and exports th
 
 ## Output
 
-- Markdown or CSV tables mapping:
+- Markdown and CSV tables mapping:
   - Internal record IDs
   - ZTR string IDs
   - Human-readable names (with ability levels where applicable)
@@ -36,7 +36,9 @@ It parses game data (wtb and ztr files, exported to json and txt) and exports th
 ## Project Structure
 
 - `Program.cs`: Entry point; sets up file paths and runs parsers.
-- `ItemWdbParser.cs`: Parses item data and outputs Markdown tables.
+- `ItemWdbParser.cs`: Parses item data into reusable item records.
+- `MarkdownParser.cs`: Exports item records as Markdown tables.
+- `CsvParser.cs`: Exports the same item data as escaped CSV tables.
 
 ## Requirements
 
