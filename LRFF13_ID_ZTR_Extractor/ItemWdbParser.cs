@@ -2,9 +2,11 @@
 
 namespace LRFF13_ID_ZTR_Extractor
 {
+    internal sealed record ItemRecord(string Id, string Name);
+
     internal class ItemWdbParser
     {
-        private readonly Dictionary<string, string> PrefixLookup = new Dictionary<string, string>() {
+        private readonly Dictionary<string, string> PrefixLookup = new() {
             {"wea", "weapons" },
             {"shi", "shields" },
             {"acc", "accessories" },
@@ -37,128 +39,60 @@ namespace LRFF13_ID_ZTR_Extractor
             TxtresPath = txtPath;
         }
 
-        /// <summary>
-        /// Parse the item.json file looking for the "record" and "sItemNameStringId" values.
-        /// Set the "record" value to the ID
-        /// Use the "sItemNameStringId" ID as a lookup into txtres_us, set its value to Name
-        /// Export as a markdown table to <paramref name="outputMdPath"/>
-        /// </summary>
-        /// <param name="prefix">The prefix to search for in the item file</param>
-        /// <param name="outputMdPath">The path to export to</param>
-        public void Parse(string prefix, string outputMdPath)
+        internal IReadOnlyList<ItemRecord> GetItems(string prefix)
         {
-            Console.WriteLine($"Parsing {PrefixLookup[prefix]}");
-
             var itemJson = JsonDocument.Parse(File.ReadAllText(ItemWdbPath));
 
-            // Load txtres_us.txt
-            var ZTRLookup = new Dictionary<string, string>();
-
+            var ztrLookup = new Dictionary<string, string>();
             foreach (var line in File.ReadLines(TxtresPath))
             {
                 if (!line.Contains("|:|"))
                     continue;
 
                 var parts = line.Split("|:|", 2, StringSplitOptions.TrimEntries);
-                if (parts.Length != 2)
+                if (parts.Length != 2 || parts[0].EndsWith("h"))
                     continue;
 
-                string key = parts[0];
-                string value = parts[1];
-
-                // Make sure we skip over "h" post-fixed entries which are descriptions
-                if (key.EndsWith("h"))
-                    continue;
-
-                ZTRLookup[key] = value;
+                ztrLookup[parts[0]] = parts[1];
             }
 
-            using var writer = new StreamWriter(outputMdPath);
-            //Create the header for the .md table
-            writer.WriteLine($"### {PrefixLookup[prefix]}");
-            writer.WriteLine("| ID | Name |");
-            writer.WriteLine("| -- | -- |");
-
-            // Iterate all the entries in the main "records" array
+            var items = new List<ItemRecord>();
             foreach (var item in itemJson.RootElement.GetProperty("records").EnumerateArray())
             {
-                // Get the record (internal ID) and sItemNameStringId (ZTR lookup ID) values
                 string record = item.GetProperty("record").GetString() ?? "";
-                string nameId = item.GetProperty("sItemNameStringId").GetString() ?? "";
-
-                // Apply prefix filter
-                if (!record.StartsWith(prefix))
+                if (!record.StartsWith(prefix) ||
+                    (prefix == "ac" && record.StartsWith("acc")) ||
+                    (prefix == "ma" && record.StartsWith("mat")))
+                {
                     continue;
-
-                // Special exceptions for "ma" and "ac" prefixes, which would otherwise also catch "mat" and "acc"
-                bool match = false;
-
-                if (prefix == "ac")
-                {
-                    // match "ac*" but NOT "acc*"
-                    if (record.StartsWith("ac") && !record.StartsWith("acc"))
-                        match = true;
                 }
-                else if (prefix == "ma")
-                {
-                    // match "ma*" but NOT "mat*"
-                    if (record.StartsWith("ma") && !record.StartsWith("mat"))
-                        match = true;
-                }
-                else
-                {
-                    // normal prefix match
-                    if (record.StartsWith(prefix))
-                        match = true;
-                }
-
-                if (!match)
-                    continue;
 
                 string name = "N/A";
-
-                // Lookup name
-                if (!string.IsNullOrWhiteSpace(nameId) &&
-                    ZTRLookup.TryGetValue(nameId, out string txtName))
+                string nameId = item.GetProperty("sItemNameStringId").GetString() ?? "";
+                if (!string.IsNullOrWhiteSpace(nameId) && ztrLookup.TryGetValue(nameId, out string? txtName))
                 {
-                    if (txtName.Contains('{'))
-                        txtName = txtName[..txtName.IndexOf('{')];
-
-                    name = txtName;
+                    int descriptionStart = txtName.IndexOf('{');
+                    name = descriptionStart >= 0 ? txtName[..descriptionStart] : txtName;
                 }
 
-                // Abilities are post-fixed with a "level" indicator, map it to the level displayed in-game
-                string level = "";
-                switch (record.Substring(record.Length - 3, 3))
-                {
-                    case "_00":
-                        level = " Lv. 1";
-                        break;
+                string level = record.Length >= 3
+                    ? record[^3..] switch
+                    {
+                        "_00" => " Lv. 1",
+                        "_10" => " Lv. 2",
+                        "_20" => " Lv. 3",
+                        "_30" => " Lv. 4",
+                        "_40" => " Lv. 5",
+                        _ => ""
+                    }
+                    : "";
 
-                    case "_10":
-                        level = " Lv. 2";
-                        break;
-
-                    case "_20":
-                        level = " Lv. 3";
-                        break;
-
-                    case "_30":
-                        level = " Lv. 4";
-                        break;
-
-                    case "_40":
-                        level = " Lv. 5";//☆?
-                        break;
-
-                    default:
-                        break;
-                }
-
-                writer.WriteLine($"| {record} | {name}{level} |");
+                items.Add(new ItemRecord(record, name + level));
             }
 
-            Console.WriteLine($"Done parsing prefix '{PrefixLookup[prefix]}', written to {outputMdPath}");
+            return items;
         }
+
+        internal string GetCategoryName(string prefix) => PrefixLookup[prefix];
     }
 }
